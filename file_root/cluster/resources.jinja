@@ -70,3 +70,13 @@
     {% endif %}
   {% endfor %}
 {%- endmacro %}
+
+{% macro get_candidate_hostname(sls) -%}
+  {% for role in salt['pillar.get']('roles' , default=()) %}
+    {% if sls in salt['pillar.get']('sls:%s' % role) %}
+      {% if role in ['controller', 'network'] %}
+{{ salt['pillar.get']('hostnames:%s' % pillar[role]) }}{% elif grains['id'] in salt['pillar.get']('%s' % role) %}
+{{ salt['pillar.get']('hostnames:%s' % grains['id']) }}{% endif %}
+    {% endif %}
+  {% endfor %}
+{%- endmacro %}

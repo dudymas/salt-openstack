@@ -1,4 +1,4 @@
-{% from "cluster/resources.jinja" import get_candidate with context %}
+{% from "cluster/resources.jinja" import get_candidate_hostname, get_candidate with context %}
 
 heat_api_install: 
   pkg: 
@@ -42,12 +42,12 @@ heat_conf:
 {% else %}
           rpc_backend: "{{ salt['pillar.get']('queue_engine') }}"
 {% endif %}
-          rabbit_host: "{{ get_candidate('queue.%s' % salt['pillar.get']('queue_engine')) }}"
+          rabbit_host: "{{ get_candidate_hostname('queue.%s' % salt['pillar.get']('queue_engine')) }}"
           rabbit_password: {{ salt['pillar.get']('rabbitmq:guest_password') }}
           heat_metadata_server_url: http://{{ get_candidate('heat') }}:8000
           heat_waitcondition_server_url: http://{{ get_candidate('heat') }}:8000/v1/waitcondition
         keystone_authtoken: 
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
           identity_uri: http://{{ get_candidate('keystone') }}:35357
 {% else %}
           auth_host: "{{ get_candidate('keystone') }}"

@@ -28,7 +28,7 @@ keystone_conf:
             admin_token: {{ salt['pillar.get']('keystone:admin_token') }}
           database: 
             connection: mysql://{{ salt['pillar.get']('databases:keystone:username') }}:{{ salt['pillar.get']('databases:keystone:password') }}@{{ get_candidate('mysql') }}/{{ salt['pillar.get']('databases:keystone:db_name') }}
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
           token: 
             provider: keystone.token.providers.uuid.Provider
             driver: keystone.token.persistence.backends.sql.Token
@@ -44,7 +44,7 @@ keystone_sqlite_delete:
     - require: 
       - file: keystone_conf
 
-{% if pillar['cluster_type'] == 'juno' and grains['os'] == 'CentOS' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) and grains['os'] == 'CentOS' %}
 keystone_pki_setup: 
   cmd: 
     - run

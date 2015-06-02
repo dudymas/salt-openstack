@@ -1,4 +1,4 @@
-{% from "cluster/resources.jinja" import get_candidate with context %}
+{% from "cluster/resources.jinja" import get_candidate_hostname, get_candidate with context %}
 
 nova_compute_install: 
   pkg: 
@@ -17,7 +17,7 @@ python_guestfs_install:
     - name: {{ salt['pillar.get']('packages:python_guestfs') }}
 {% endif %}
 
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
 sysfsutils_install: 
   pkg: 
     - installed
@@ -62,21 +62,21 @@ nova_conf_compute:
         DEFAULT: 
           auth_strategy: keystone
           rpc_backend: "{{ salt['pillar.get']('queue_engine') }}"
-          rabbit_host: "{{ get_candidate('queue.%s' % salt['pillar.get']('queue_engine')) }}"
+          rabbit_host: "{{ get_candidate_hostname('queue.%s' % salt['pillar.get']('queue_engine')) }}"
           rabbit_password: {{ salt['pillar.get']('rabbitmq:guest_password') }}
           my_ip: {{ get_candidate('nova.compute_kvm') }}
           vnc_enabled: True
           vncserver_listen: 0.0.0.0
           vncserver_proxyclient_address: {{ get_candidate('nova.compute_kvm') }}
           novncproxy_base_url: "http://{{ get_candidate('nova') }}:6080/vnc_auto.html"
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
         glance:
           host: "{{ get_candidate('glance') }}"
 {% else %}
           glance_host: {{ get_candidate('glance') }}
 {% endif %}
         keystone_authtoken: 
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
           auth_uri: "http://{{ get_candidate('keystone') }}:5000/v2.0"
           identity_uri: http://{{ get_candidate('keystone') }}:35357
 {% else %}

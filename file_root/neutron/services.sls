@@ -1,4 +1,4 @@
-{% from "cluster/resources.jinja" import get_candidate with context %}
+{% from "cluster/resources.jinja" import get_candidate_hostname, get_candidate with context %}
 
 enable_forwarding: 
   file: 
@@ -71,13 +71,13 @@ neutron_conf:
 {% else %}
           rpc_backend: "{{ salt['pillar.get']('queue_engine') }}"
 {% endif %}
-          rabbit_host: "{{ get_candidate('queue.%s' % salt['pillar.get']('queue_engine')) }}"
+          rabbit_host: "{{ get_candidate_hostname('queue.%s' % salt['pillar.get']('queue_engine')) }}"
           rabbit_password: {{ salt['pillar.get']('rabbitmq:guest_password') }}
           core_plugin: ml2
           service_plugins: router
           allow_overlapping_ips: True
         keystone_authtoken: 
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
           auth_uri: "http://{{ get_candidate('keystone') }}:5000/v2.0"
           identity_uri: http://{{ get_candidate('keystone') }}:35357
 {% else %}

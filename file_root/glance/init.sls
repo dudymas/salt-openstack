@@ -1,4 +1,4 @@
-{% from "cluster/resources.jinja" import get_candidate with context %}
+{% from "cluster/resources.jinja" import get_candidate_hostname, get_candidate with context %}
 
 glance_install:
   pkg: 
@@ -27,10 +27,10 @@ glance_api_conf:
           connection: "mysql://{{ salt['pillar.get']('databases:glance:username') }}:{{ salt['pillar.get']('databases:glance:password') }}@{{ get_candidate('mysql') }}/{{ salt['pillar.get']('databases:glance:db_name') }}"
         DEFAULT: 
           rpc_backend: "{{ salt['pillar.get']('queue_engine') }}"
-          rabbit_host: "{{ get_candidate('queue.%s' % salt['pillar.get']('queue_engine')) }}"
+          rabbit_host: "{{ get_candidate_hostname('queue.%s' % salt['pillar.get']('queue_engine')) }}"
           rabbit_password: {{ salt['pillar.get']('rabbitmq:guest_password') }}
         keystone_authtoken: 
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
           auth_uri: "http://{{ get_candidate('keystone') }}:5000/v2.0"
           identity_uri: "http://{{ get_candidate('keystone') }}:35357"
 {% else %}
@@ -42,7 +42,7 @@ glance_api_conf:
           admin_tenant_name: service
           admin_user: glance
           admin_password: "{{ salt['pillar.get']('keystone:tenants:service:users:glance:password') }}"
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
         glance_store:
           default_store: file
           filesystem_store_datadir: "/var/lib/glance/images/"
@@ -70,10 +70,10 @@ glance_registry_conf:
           connection: "mysql://{{ salt['pillar.get']('databases:glance:username') }}:{{ salt['pillar.get']('databases:glance:password') }}@{{ get_candidate('mysql') }}/{{ salt['pillar.get']('databases:glance:db_name') }}"
         DEFAULT: 
           rpc_backend: "{{ salt['pillar.get']('queue_engine') }}"
-          rabbit_host: "{{ get_candidate('queue.%s' % salt['pillar.get']('queue_engine')) }}"
+          rabbit_host: "{{ get_candidate_hostname('queue.%s' % salt['pillar.get']('queue_engine')) }}"
           rabbit_password: {{ salt['pillar.get']('rabbitmq:guest_password') }}
         keystone_authtoken: 
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
           auth_uri: "http://{{ get_candidate('keystone') }}:5000/v2.0"
           identity_uri: "http://{{ get_candidate('keystone') }}:35357"
 {% else %}

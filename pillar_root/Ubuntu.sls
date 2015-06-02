@@ -1,8 +1,8 @@
 packages:
   linux_headers: linux-headers-{{ grains['kernelrelease'] }}
-  mysql_client: mysql-client-5.5
+  mysql_client: mysql-client-5.6
   python_mysql_library: python-mysqldb
-  mysql_server: mysql-server-5.5
+  mysql_server: mysql-server-5.6
   rabbitmq: rabbitmq-server
   keystone: keystone
   glance: glance

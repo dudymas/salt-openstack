@@ -1,4 +1,4 @@
-{% from "cluster/resources.jinja" import get_candidate with context %}
+{% from "cluster/resources.jinja" import get_candidate_hostname, get_candidate with context %}
 
 neutron_server_install: 
   pkg: 
@@ -37,7 +37,7 @@ neutron_conf_file:
 {% else %}
           rpc_backend: "{{ salt['pillar.get']('queue_engine') }}"
 {% endif %}
-          rabbit_host: "{{ get_candidate('queue.%s' % salt['pillar.get']('queue_engine')) }}"
+          rabbit_host: "{{ get_candidate_hostname('queue.%s' % salt['pillar.get']('queue_engine')) }}"
           rabbit_password: {{ salt['pillar.get']('rabbitmq:guest_password') }}
           core_plugin: ml2
           service_plugins: router
@@ -46,7 +46,7 @@ neutron_conf_file:
           notify_nova_on_port_status_changes: True
           notify_nova_on_port_data_changes: True
           nova_url: "http://{{ get_candidate('nova') }}:8774/v2"
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
           nova_region_name: RegionOne
 {% endif %}
           nova_admin_username: nova
@@ -54,7 +54,7 @@ neutron_conf_file:
           nova_admin_password: "{{ salt['pillar.get']('keystone:tenants:service:users:nova:password') }}"
           nova_admin_auth_url: "http://{{ get_candidate('keystone') }}:35357/v2.0"
         keystone_authtoken: 
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
           auth_uri: "http://{{ get_candidate('keystone') }}:5000/v2.0"
           identity_uri: http://{{ get_candidate('keystone') }}:35357
 {% else %}
@@ -92,7 +92,7 @@ neutron_networking_nova_conf:
           firewall_driver: "nova.virt.firewall.NoopFirewallDriver"
           vif_plugging_is_fatal: False
           vif_plugging_timeout: 0
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
         neutron:
           url: http://{{ get_candidate('neutron') }}:9696
           auth_strategy: keystone
@@ -154,11 +154,15 @@ nova_conductor_restart:
       - file: neutron_networking_nova_conf
       - ini: neutron_networking_nova_conf
 
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
 neutron_db_sync:
   cmd:
     - run
+{% if pillar['cluster_type'] == 'juno' %}
     - name: su -s /bin/sh -c "neutron-db-manage --config-file {{ salt['pillar.get']('conf_files:neutron') }} --config-file {{ salt['pillar.get']('conf_files:neutron_ml2') }} upgrade juno" neutron
+{% else %}
+    - name: su -s /bin/sh -c "neutron-db-manage --config-file {{ salt['pillar.get']('conf_files:neutron') }} --config-file {{ salt['pillar.get']('conf_files:neutron_ml2') }} upgrade head" neutron
+{% endif %}
     - require:
       - pkg: neutron_server_install
       - pkg: python_neutronclient_install
@@ -184,7 +188,7 @@ neutron_server_service_running:
       - ini: neutron_conf_file
       - file: neutron_ml2_conf
       - ini: neutron_ml2_conf
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
       - cmd: neutron_db_sync
 {% endif %}
 

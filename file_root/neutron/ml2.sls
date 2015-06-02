@@ -66,7 +66,7 @@ neutron_ml2_conf:
 {% endif %}
         securitygroup:
           firewall_driver: neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
           enable_ipset: True
 {% endif %}
           enable_security_group: True

@@ -1,4 +1,4 @@
-{% from "cluster/resources.jinja" import get_candidate with context %}
+{% from "cluster/resources.jinja" import get_candidate_hostname, get_candidate with context %}
 
 lvm_install:
   pkg:
@@ -90,7 +90,7 @@ cinder_conf:
         DEFAULT:
           my_ip: "{{ get_candidate('cinder.volume') }}"
           rpc_backend: "{{ salt['pillar.get']('queue_engine') }}"
-          rabbit_host: "{{ get_candidate('queue.%s' % salt['pillar.get']('queue_engine')) }}"
+          rabbit_host: "{{ get_candidate_hostname('queue.%s' % salt['pillar.get']('queue_engine')) }}"
           rabbit_port: 5672
           rabbit_userid: guest
           rabbit_password: {{ salt['pillar.get']('rabbitmq:guest_password') }}
@@ -102,7 +102,7 @@ cinder_conf:
         database:
           connection: "mysql://{{ salt['pillar.get']('databases:cinder:username') }}:{{ salt['pillar.get']('databases:cinder:password') }}@{{ get_candidate('mysql') }}/{{ salt['pillar.get']('databases:cinder:db_name') }}"
         keystone_authtoken:
-{% if pillar['cluster_type'] == 'juno' %}
+{% if pillar['cluster_type'] in ( 'juno', 'kilo' ) %}
           auth_uri: "http://{{ get_candidate('keystone') }}:5000/v2.0"
           identity_uri: http://{{ get_candidate('keystone') }}:35357
 {% else %}
