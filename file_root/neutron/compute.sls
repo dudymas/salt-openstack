@@ -30,15 +30,6 @@ neutron_l3_agent_install:
     - installed
     - name: "{{ salt['pillar.get']('packages:neutron_l3_agent') }}"
 
-neutron_dhcp_agent_install: 
-  pkg: 
-    - installed
-    - name: "{{ salt['pillar.get']('packages:neutron_dhcp_agent') }}"
-
-neutron_metadata_agent_install: 
-  pkg: 
-    - installed
-    - name: "{{ salt['pillar.get']('packages:neutron_metadata_agent') }}"
 {% elif grains['os'] == 'CentOS' %}
 neutron_services_install: 
   pkg: 
@@ -128,73 +119,6 @@ neutron_l3_agent_conf:
       - pkg: neutron_l3_agent_install
 {% endif %}
 
-neutron_dhcp_agent_conf:
-  file: 
-    - managed
-    - name: "{{ salt['pillar.get']('conf_files:neutron_dhcp_agent') }}"
-    - user: neutron
-    - group: neutron
-    - mode: 644
-    - require: 
-      - ini: neutron_dhcp_agent_conf
-  ini: 
-    - options_present
-    - name: "{{ salt['pillar.get']('conf_files:neutron_dhcp_agent') }}"
-    - sections: 
-        DEFAULT: 
-          dhcp_delete_namespaces: False
-          interface_driver: neutron.agent.linux.interface.OVSInterfaceDriver
-          dhcp_driver: neutron.agent.linux.dhcp.Dnsmasq
-          use_namespaces: True
-          dnsmasq_config_file: "{{ salt['pillar.get']('conf_files:neutron_dnsmasq') }}"
-    - require: 
-{% if grains['os'] == 'Ubuntu' %}
-      - pkg: neutron_dhcp_agent_install
-{% endif %}
-      - file: neutron_dnsmasq_conf
-
-neutron_dnsmasq_conf:
-  file:
-    - managed
-    - name: "{{ salt['pillar.get']('conf_files:neutron_dnsmasq') }}"
-    - user: neutron
-    - group: neutron
-    - mode: 644
-    - require: 
-      - ini: neutron_dnsmasq_conf
-  ini: 
-    - options_present
-    - name: "{{ salt['pillar.get']('conf_files:neutron_dnsmasq') }}"
-    - sections: 
-        DEFAULT_IMPLICIT: 
-          dhcp-option-force: "26,1454"
-
-neutron_metadata_agent_conf:
-  file: 
-    - managed
-    - name: "{{ salt['pillar.get']('conf_files:neutron_metadata_agent') }}"
-    - user: neutron
-    - group: neutron
-    - mode: 644
-    - require: 
-      - ini: neutron_metadata_agent_conf
-  ini: 
-    - options_present
-    - name: "{{ salt['pillar.get']('conf_files:neutron_metadata_agent') }}"
-    - sections: 
-        DEFAULT: 
-          auth_url: "http://{{ get_candidate('keystone') }}:5000/v2.0"
-          auth_region: RegionOne
-          admin_tenant_name: service
-          admin_user: neutron
-          admin_password: "{{ salt['pillar.get']('keystone:tenants:service:users:neutron:password') }}"
-          nova_metadata_ip: "{{ get_candidate('nova') }}"
-          metadata_proxy_shared_secret: "{{ salt['pillar.get']('neutron:metadata_secret') }}"
-{% if grains['os'] == 'Ubuntu' %}
-    - require: 
-      - pkg: neutron_metadata_agent_install
-{% endif %}
-
 neutron_l3_agent_running:
   service: 
     - running
@@ -208,39 +132,10 @@ neutron_l3_agent_running:
       - file: neutron_l3_agent_conf
       - ini: neutron_l3_agent_conf
 
-neutron_dhcp_agent_running:
-  service: 
-    - running
-    - enable: True
-    - name: "{{ salt['pillar.get']('services:neutron_dhcp_agent') }}"
-{% if grains['os'] == 'Ubuntu' %}
-    - require: 
-      - pkg: neutron_dhcp_agent_install
-{% endif %}
-    - watch: 
-      - file: neutron_dhcp_agent_conf
-      - ini: neutron_dhcp_agent_conf
-      - file: neutron_dnsmasq_conf
-      - ini: neutron_dnsmasq_conf
-
-neutron_metadata_agent_running:
-  service: 
-    - running
-    - enable: True
-    - name: "{{ salt['pillar.get']('services:neutron_metadata_agent') }}"
-{% if grains['os'] == 'Ubuntu' %}
-    - require: 
-      - pkg: neutron_metadata_agent_install
-{% endif %}
-    - watch: 
-      - file: neutron_metadata_agent_conf
-      - ini: neutron_metadata_agent_conf
-
 neutron_services_wait:
   cmd:
     - run
     - name: sleep 5
     - require:
       - service: neutron_l3_agent_running
-      - service: neutron_dhcp_agent_running
-      - service: neutron_metadata_agent_running
+
