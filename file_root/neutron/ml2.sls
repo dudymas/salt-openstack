@@ -27,7 +27,11 @@ neutron_ml2_conf:
         ml2:
           type_drivers: "{{ ','.join(type_drivers) }}"
           tenant_network_types: "{{ ','.join(tenant_network_types) }}"
+{% if salt['pillar.get']('neutron:dvr') %}
+          mechanism_drivers: openvswitch,l2population
+{% else %}
           mechanism_drivers: openvswitch
+{% endif %}
 {% if 'flat' in type_drivers %}
         ml2_type_flat:
           flat_networks: "{{ ','.join(flat_networks) }}"
@@ -56,12 +60,10 @@ neutron_ml2_conf:
 {% if salt['pillar.get']('neutron:tunneling:enable').lower() == 'true' %}
           polling_interval: 2
           local_ip: "{{ salt['pillar.get']('hosts:%s' % grains['id']) }}"
-          l2_population: False
-          arp_responder: False
-          enable_distributed_routing: False
-          tunnel_bridge: "{{ salt['pillar.get']('neutron:tunneling:tunnel_bridge') }}"
-          tunnel_type: "{{ salt['pillar.get']('neutron:tunneling:tunnel_type') }}"
         agent:
+          l2_population: {{ salt['pillar.get']('neutron:dvr').lower().title() }}
+          arp_responder: {{ salt['pillar.get']('neutron:dvr').lower().title() }}
+          enable_distributed_routing: {{ salt['pillar.get']('neutron:dvr').lower().title() }}
           tunnel_types: "{{ salt['pillar.get']('neutron:tunneling:tunnel_type') }}"
 {% endif %}
         securitygroup:
